@@ -91,7 +91,11 @@ module CanCan
       def joins
         joins_hash = {}
         @rules.each do |rule|
-          merge_joins(joins_hash, rule.associations_hash)
+          if rule.join
+            joins_hash[rule.join] = {}
+          else
+            merge_joins(joins_hash, rule.associations_hash)
+          end
         end
         clean_joins(joins_hash) unless joins_hash.empty?
       end

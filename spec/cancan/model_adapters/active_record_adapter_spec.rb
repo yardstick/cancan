@@ -254,6 +254,31 @@ if ENV["MODEL_ADAPTER"].nil? || ENV["MODEL_ADAPTER"] == "active_record"
       @ability.model_adapter(Article, :read).joins.should == [{:project=>[:comments]}]
     end
 
+    context "joins" do
+      let(:category) { Category.create! }
+      let(:user) { User.create! }
+      let!(:blank_article) { Article.create! }
+      let!(:user_article) { Article.create!(:user_id => user.id) }
+      let!(:category_article) { Article.create!(:category_id => category.id) }
+      let(:user_join) { "LEFT JOIN #{User.table_name} ON #{User.table_name}.id = #{Article.table_name}.user_id" }
+      let(:category_join) { "LEFT JOIN #{Category.table_name} ON #{Category.table_name}.id = #{Article.table_name}.category_id" }
+
+      it "should use joins if specified" do
+        @ability.can :read, Article, :user => { :id => nil }, :join => user_join
+
+        @ability.model_adapter(Article, :read).joins.should == [user_join]
+        Article.accessible_by(@ability).should == [blank_article, category_article]
+      end
+
+      it "should combine joins" do
+        @ability.can :read, Article, :user => { :id => nil }, :join => user_join
+        @ability.can :read, Article, :category => { :id => category.id }, :join => category_join
+
+        @ability.model_adapter(Article, :read).joins.should include(user_join, category_join)
+        Article.accessible_by(@ability).should == [blank_article, category_article]
+      end
+    end
+
     it "should merge :all conditions with other conditions" do
       user = User.create!
       article = Article.create!(:user => user)

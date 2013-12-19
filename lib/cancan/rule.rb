@@ -3,7 +3,7 @@ module CanCan
   # it holds the information about a "can" call made on Ability and provides
   # helpful methods to determine permission checking and conditions hash generation.
   class Rule # :nodoc:
-    attr_reader :base_behavior, :subjects, :actions, :conditions
+    attr_reader :base_behavior, :subjects, :actions, :conditions, :join
     attr_writer :expanded_actions
 
     # The first argument when initializing is the base_behavior which is a true/false
@@ -12,6 +12,9 @@ module CanCan
     # of conditions and the last one is the block passed to the "can" call.
     def initialize(base_behavior, action, subject, conditions, block)
       raise Error, "You are not able to supply a block with a hash of conditions in #{action} #{subject} ability. Use either one." if conditions.kind_of?(Hash) && !block.nil?
+      @join = if conditions.is_a?(Hash)
+        conditions.delete(:join)
+      end
       @match_all = action.nil? && subject.nil?
       @base_behavior = base_behavior
       @actions = [action].flatten
